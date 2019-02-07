@@ -1,6 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
+var MongoClient = require("mongodb").MongoClient;
+var url = "mongodb://localhost:27017/situp";
+
+MongoClient.connect(url, (err, db) => {
+  if (err) throw err;
+  console.log("Database created!");
+  db.close();
+});
+
 router.use("/", (req, res, next) => {
   let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   console.log("grupper: ip " + ip);
