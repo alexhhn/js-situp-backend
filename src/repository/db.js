@@ -3,35 +3,44 @@ class Connection {
     this.grupper = grupper;
   }
 
+  async getGrupper() {
+    if (this.grupper.length > 0) {
+      return this.grupper;
+    }
+    throw new Error('Gruppen er tom');
+  }
+
   async get(gruppeNavn) {
-    let gruppe = this.grupper.find(gruppe => gruppe.navn === gruppeNavn);
+    let gruppe = this.grupper.find(element => element.name == gruppeNavn);
     if (gruppe == null) {
-      throw new Error("Kunne ikke finne gruppe");
+      throw new Error('Kunne ikke finne gruppe');
     }
     return gruppe;
   }
 
-  async insert(navn, gruppe) {
-    let index = this.grupper.findIndex(gr => gr.navn === navn);
+  async insert(name, gruppe) {
+    let index = this.grupper.findIndex(gr => gr.name === name);
     if (index < 0) {
-      gruppe.navn = navn;
+      gruppe.name = name;
+      // console.log(gruppe, 'gruppe to add');
       this.grupper.push(gruppe);
+      // console.log(this.grupper);
     } else {
-      throw new Error("Gruppe eksiterer allerede");
+      throw new Error('Gruppe eksiterer allerede');
     }
   }
 
-  async delete(navn) {
+  async delete(name) {
     let length = this.grupper.length;
-    this.grupper = this.grupper.filter(gr => gr.navn !== navn);
+    this.grupper = this.grupper.filter(gr => gr.name !== name);
     if (length === 0 && this.grupper.length === length) {
-      throw new Error("Kunne ikke finne gruppe");
+      throw new Error('Kunne ikke finne gruppe');
     }
   }
 
-  async put(navn, gruppe) {
-    let index = this.grupper.findIndex(gr => gr.navn === navn);
-    gruppe.navn = navn;
+  async put(name, gruppe) {
+    let index = this.grupper.findIndex(gr => gr.name === name);
+    gruppe.name = name;
     if (index < 0) {
       this.grupper.push(gruppe);
     } else {

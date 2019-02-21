@@ -1,14 +1,32 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const client = require("../repository/db");
+const client = require('../repository/db');
 
-router.use("/", (req, res, next) => {
-  let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  console.log("grupper: ip " + ip);
+router.use('/', (req, res, next) => {
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  console.log('grupper: ip ' + ip);
   next();
 });
 
-router.get("/:navn", (req, res) => {
+router.get('/', (req, res) => {
+  client
+    .getConnection()
+    .then(connection => {
+      connection
+        .getGrupper()
+        .then(grupper => {
+          res.send(grupper);
+        })
+        .catch(err => {
+          res.status(404).send({ error: err.message });
+        });
+    })
+    .catch(err => {
+      res.status(500).send({ error: err.message });
+    });
+});
+
+router.get('/:navn', (req, res) => {
   client
     .getConnection()
     .then(connection => {
@@ -26,7 +44,8 @@ router.get("/:navn", (req, res) => {
     });
 });
 
-router.post("/:navn", (req, res) => {
+// Vurderer å ikke bruke parameter på post, men heller fra body?
+router.post('/:navn', (req, res) => {
   client
     .getConnection()
     .then(connection => {
@@ -42,7 +61,7 @@ router.post("/:navn", (req, res) => {
     });
 });
 
-router.put("/:navn", (req, res) => {
+router.put('/:navn', (req, res) => {
   client
     .getConnection()
     .then(connection => {
@@ -58,7 +77,7 @@ router.put("/:navn", (req, res) => {
     });
 });
 
-router.delete("/:navn", (req, res) => {
+router.delete('/:navn', (req, res) => {
   client
     .getConnection()
     .then(connection => {
