@@ -1,96 +1,75 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const client = require('../repository/db');
+const client = require("../repository/db");
+const errors = require("../errors/errors");
 
-router.use('/', (req, res, next) => {
-  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  console.log('grupper: ip ' + ip);
+router.use("/", (req, res, next) => {
+  let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  console.log("grupper: ip " + ip);
   next();
 });
 
-router.get('/', (req, res) => {
-  client
-    .getConnection()
-    .then(connection => {
-      connection
-        .getGrupper()
-        .then(grupper => {
-          res.send(grupper);
-        })
-        .catch(err => {
-          res.status(404).send({ error: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ error: err.message });
-    });
-});
+const asyncWrapper = fn => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(err => {
+    if (err instanceof errors.HttpError) {
+      res.status(err.status).send({
+        message: err.message,
+        status: err.status
+      });
+    } else {
+      console.log(err);
+      res.status(500).send({
+        message: "Internal server error",
+        status: 500
+      });
+    }
+  });
+};
 
-router.get('/:navn', (req, res) => {
-  client
-    .getConnection()
-    .then(connection => {
-      connection
-        .get(req.params.navn)
-        .then(gruppe => {
-          res.send(gruppe);
-        })
-        .catch(err => {
-          res.status(404).send({ error: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ error: err.message });
-    });
-});
+router.get(
+  "/",
+  asyncWrapper(async (req, res) => {
+    let conneciton = await client.getConnection();
+    let grupper = await conneciton.getGrupper();
+    res.send(grupper);
+  })
+);
+
+router.get(
+  "/:name",
+  asyncWrapper(async (req, res) => {
+    let connection = await client.getConnection();
+    let gruppe = await connection.get(req.params.name);
+    res.send(gruppe);
+  })
+);
 
 // Vurderer å ikke bruke parameter på post, men heller fra body?
-router.post('/:navn', (req, res) => {
-  client
-    .getConnection()
-    .then(connection => {
-      connection
-        .insert(req.params.navn, req.body)
-        .then(() => res.sendStatus(200))
-        .catch(err => {
-          res.status(400).send({ error: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ error: err.message });
-    });
-});
+router.post(
+  "/",
+  asyncWrapper(async (req, res) => {
+    let conneciton = await client.getConnection();
+    await conneciton.insert(req.body);
+    res.send({ message: "group created" });
+  })
+);
 
-router.put('/:navn', (req, res) => {
-  client
-    .getConnection()
-    .then(connection => {
-      connection
-        .put(req.params.navn, req.body)
-        .then(() => res.sendStatus(200))
-        .catch(err => {
-          res.status(400).send({ error: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ error: err.message });
-    });
-});
+router.put(
+  "/:name",
+  asyncWrapper(async (req, res) => {
+    let connection = await client.getConnection();
+    await connection.put(req.params.name, req.body);
+    res.send({ message: "group updated" });
+  })
+);
 
-router.delete('/:navn', (req, res) => {
-  client
-    .getConnection()
-    .then(connection => {
-      connection
-        .delete(req.params.navn)
-        .then(() => res.sendStatus(200))
-        .catch(err => {
-          res.status(400).send({ error: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ error: err.message });
-    });
-});
+router.delete(
+  "/:name",
+  asyncWrapper(async (req, res) => {
+    let conneciton = await client.getConnection();
+    await conneciton.delete(req.params.name);
+    res.send({ message: "group deleted" });
+  })
+);
 
 module.exports = router;

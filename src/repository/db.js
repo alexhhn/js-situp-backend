@@ -1,3 +1,5 @@
+const errors = require("../errors/errors");
+
 class Connection {
   constructor(grupper) {
     this.grupper = grupper;
@@ -7,40 +9,44 @@ class Connection {
     if (this.grupper.length > 0) {
       return this.grupper;
     }
-    throw new Error('Gruppen er tom');
+    throw new errors.NotFound("No groups found");
   }
 
   async get(gruppeNavn) {
     let gruppe = this.grupper.find(element => element.name == gruppeNavn);
     if (gruppe == null) {
-      throw new Error('Kunne ikke finne gruppe');
+      throw new errors.NotFound("Could not find group");
     }
     return gruppe;
   }
 
-  async insert(name, gruppe) {
-    let index = this.grupper.findIndex(gr => gr.name === name);
+  async insert(gruppe) {
+    if (gruppe.name == null) {
+      throw new errors.BadRequest("Name not in body");
+    }
+
+    let index = this.grupper.findIndex(gr => gr.name === gruppe.name);
     if (index < 0) {
-      gruppe.name = name;
       // console.log(gruppe, 'gruppe to add');
       this.grupper.push(gruppe);
       // console.log(this.grupper);
     } else {
-      throw new Error('Gruppe eksiterer allerede');
+      throw new errors.NotFound("Group already exists");
     }
   }
 
   async delete(name) {
+    console.log(name);
     let length = this.grupper.length;
     this.grupper = this.grupper.filter(gr => gr.name !== name);
     if (length === 0 && this.grupper.length === length) {
-      throw new Error('Kunne ikke finne gruppe');
+      throw new errors.NotFound("Could not find group");
     }
   }
 
   async put(name, gruppe) {
-    let index = this.grupper.findIndex(gr => gr.name === name);
     gruppe.name = name;
+    let index = this.grupper.findIndex(gr => gr.name === name);
     if (index < 0) {
       this.grupper.push(gruppe);
     } else {
